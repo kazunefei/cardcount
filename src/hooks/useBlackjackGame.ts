@@ -100,6 +100,7 @@ export function useBlackjackGame({
   const dealerTriggeredRef = useRef(false);
   const runDealerInProgressRef = useRef(false);
   const handCountDeltaRef = useRef(0);
+  const hasSubmittedCountRef = useRef(false);
 
   const trueCount = useMemo(
     () => calcTrueCount(runningCount, cardsRemaining),
@@ -122,6 +123,7 @@ export function useBlackjackGame({
     setCountAttempts(0);
     setLastOutcomeText(null);
     setHasSubmittedCount(false);
+    hasSubmittedCountRef.current = false;
     if (!practiceMode) {
       setBankroll(INITIAL_BANKROLL);
     }
@@ -405,6 +407,7 @@ export function useBlackjackGame({
 
       setLastOutcomeText(outcomeText.join(' • '));
       setHasSubmittedCount(false);
+      hasSubmittedCountRef.current = false;
       setPhase('betweenHands');
       return resolved;
     });
@@ -430,7 +433,16 @@ export function useBlackjackGame({
   }
 
   function submitCount() {
+    const wasBetweenHands = phase === 'betweenHands';
+    const isTimedPace = pace !== 'manual';
     evaluateCountSubmission(true);
+
+    if (wasBetweenHands && isTimedPace) {
+      const NEXT_HAND_DELAY_MS = 3000;
+      setTimeout(() => {
+        startNextHand();
+      }, NEXT_HAND_DELAY_MS);
+    }
   }
 
   function evaluateCountSubmission(hasInput: boolean) {
@@ -456,6 +468,7 @@ export function useBlackjackGame({
     }
     setCountAttempts((prev) => prev + 1);
     setHasSubmittedCount(true);
+    hasSubmittedCountRef.current = true;
     setCountInput('');
     if (phase === 'betweenHands') {
       const delta = handCountDeltaRef.current;
@@ -465,7 +478,7 @@ export function useBlackjackGame({
   }
 
   function startNextHand() {
-    if (phase === 'betweenHands' && !hasSubmittedCount) {
+    if (phase === 'betweenHands' && !hasSubmittedCountRef.current) {
       evaluateCountSubmission(!!countInput.trim());
     }
     setPlayerHands([]);
@@ -490,6 +503,7 @@ export function useBlackjackGame({
     setCountAttempts(0);
     setLastOutcomeText(null);
     setHasSubmittedCount(false);
+    hasSubmittedCountRef.current = false;
     if (!practiceMode) {
       setBankroll(INITIAL_BANKROLL);
     }
