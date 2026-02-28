@@ -2,10 +2,25 @@ interface BetControlsProps {
   currentBet: number;
   onChangeBet(value: number): void;
   onStartHand(): void;
-  disabled?: boolean;
+  onNextHand(): void;
+  phase: string;
+  pace: string;
 }
 
-export function BetControls({ currentBet, onChangeBet, onStartHand, disabled }: BetControlsProps) {
+export function BetControls({
+  currentBet,
+  onChangeBet,
+  onStartHand,
+  onNextHand,
+  phase,
+  pace,
+}: BetControlsProps) {
+  const isBetting = phase === 'betting';
+  const isBetweenHands = phase === 'betweenHands';
+  const isManualPace = pace === 'manual';
+  const dealButtonEnabled = isBetting || (isBetweenHands && isManualPace);
+  const dealButtonAction = isBetting ? onStartHand : onNextHand;
+
   function adjust(delta: number) {
     const next = Math.max(1, currentBet + delta);
     onChangeBet(next);
@@ -25,13 +40,13 @@ export function BetControls({ currentBet, onChangeBet, onStartHand, disabled }: 
             value={currentBet}
             min={1}
             onChange={(e) => onChangeBet(Math.max(1, Number(e.target.value) || 1))}
-            disabled={disabled}
+            disabled={!isBetting}
           />
           <button
             type="button"
             className="btn secondary"
             onClick={() => adjust(1)}
-            disabled={disabled}
+            disabled={!isBetting}
           >
             +1
           </button>
@@ -39,7 +54,7 @@ export function BetControls({ currentBet, onChangeBet, onStartHand, disabled }: 
             type="button"
             className="btn secondary"
             onClick={() => adjust(5)}
-            disabled={disabled}
+            disabled={!isBetting}
           >
             +5
           </button>
@@ -47,8 +62,13 @@ export function BetControls({ currentBet, onChangeBet, onStartHand, disabled }: 
         <button
           type="button"
           className="btn"
-          onClick={onStartHand}
-          disabled={disabled}
+          onClick={dealButtonAction}
+          disabled={!dealButtonEnabled}
+          title={
+            isBetweenHands && !isManualPace
+              ? 'Next hand starts automatically'
+              : undefined
+          }
         >
           Deal Hand
         </button>

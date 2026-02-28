@@ -334,7 +334,6 @@ function BlackjackView({ state, actions, derived, countTypeLabel, showInternalCo
         onStand={actions.stand}
         onDouble={actions.doubleDown}
         onSplit={actions.split}
-        onNextHand={actions.startNextHand}
         canAct={canAct}
         lastOutcomeText={lastOutcomeText}
       />
@@ -344,7 +343,9 @@ function BlackjackView({ state, actions, derived, countTypeLabel, showInternalCo
           currentBet={currentBet}
           onChangeBet={actions.setCurrentBet}
           onStartHand={actions.startHand}
-          disabled={phase !== 'betting'}
+          onNextHand={actions.startNextHand}
+          phase={phase}
+          pace={pace}
         />
         <div className="panel">
           <div className="panel-header">

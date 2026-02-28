@@ -10,7 +10,6 @@ interface BlackjackTableProps {
   onStand(): void;
   onDouble(): void;
   onSplit(): void;
-  onNextHand(): void;
   canAct: boolean;
   lastOutcomeText: string | null;
 }
@@ -24,7 +23,6 @@ export function BlackjackTable({
   onStand,
   onDouble,
   onSplit,
-  onNextHand,
   canAct,
   lastOutcomeText,
 }: BlackjackTableProps) {
@@ -121,15 +119,6 @@ export function BlackjackTable({
                 Split
               </button>
             </>
-          )}
-          {isBetweenHands && (
-            <button
-              type="button"
-              className="btn"
-              onClick={onNextHand}
-            >
-              Next Hand
-            </button>
           )}
         </div>
         {lastOutcomeText && (
