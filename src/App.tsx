@@ -54,18 +54,35 @@ function App() {
           <div className="compact-row">
             <div>
               <div className="field-label">Decks in shoe</div>
-              <input
-                type="number"
-                className="number-input"
-                min={1}
-                max={8}
-                value={settings.numDecks}
-                onChange={(e) =>
-                  updateSettings({
-                    numDecks: Math.min(8, Math.max(1, Number(e.target.value) || 1)),
-                  })
-                }
-              />
+              <div className="compact-row decks-control">
+                <button
+                  type="button"
+                  className="btn secondary decks-btn"
+                  onClick={() =>
+                    updateSettings({
+                      numDecks: Math.max(1, settings.numDecks - 1),
+                    })
+                  }
+                  disabled={settings.numDecks <= 1}
+                  aria-label="Fewer decks"
+                >
+                  −
+                </button>
+                <span className="decks-value">{settings.numDecks}</span>
+                <button
+                  type="button"
+                  className="btn secondary decks-btn"
+                  onClick={() =>
+                    updateSettings({
+                      numDecks: Math.min(8, settings.numDecks + 1),
+                    })
+                  }
+                  disabled={settings.numDecks >= 8}
+                  aria-label="More decks"
+                >
+                  +
+                </button>
+              </div>
             </div>
             <div>
               <div className="field-label">Count mode</div>

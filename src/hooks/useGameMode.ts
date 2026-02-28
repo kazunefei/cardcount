@@ -15,7 +15,7 @@ export interface SettingsState {
 export function useGameMode() {
   const [mode, setMode] = useState<GameMode>('blackjack');
   const [settings, setSettings] = useState<SettingsState>({
-    numDecks: 6,
+    numDecks: 2,
     countType: 'running',
     practiceBankroll: true,
     showInternalCounts: true,

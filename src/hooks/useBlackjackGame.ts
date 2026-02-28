@@ -98,6 +98,8 @@ export function useBlackjackGame({
 
   const shoeRef = useRef<Card[]>([]);
   const dealerTriggeredRef = useRef(false);
+  const runDealerInProgressRef = useRef(false);
+  const handCountDeltaRef = useRef(0);
 
   const trueCount = useMemo(
     () => calcTrueCount(runningCount, cardsRemaining),
@@ -114,6 +116,8 @@ export function useBlackjackGame({
     setActiveHandIndex(0);
     setPhase('betting');
     setRunningCount(0);
+    handCountDeltaRef.current = 0;
+    runDealerInProgressRef.current = false;
     setCountScore(0);
     setCountAttempts(0);
     setLastOutcomeText(null);
@@ -150,8 +154,7 @@ export function useBlackjackGame({
     if (!card) return null;
 
     setCardsRemaining(shoeRef.current.length);
-    setRunningCount((prev) => prev + hiLoValue(card));
-    // Keep React state copy roughly in sync for debugging/inspection.
+    handCountDeltaRef.current += hiLoValue(card);
     setShoe([...shoeRef.current]);
 
     return card;
@@ -166,6 +169,9 @@ export function useBlackjackGame({
   function startHand() {
     if (phase !== 'betting') return;
     if (!practiceMode && bankroll < currentBet) return;
+
+    runDealerInProgressRef.current = false;
+    handCountDeltaRef.current = 0;
 
     const p1: Card[] = [];
     const d1: Card[] = [];
@@ -325,34 +331,31 @@ export function useBlackjackGame({
 
   function runDealer() {
     if (phase !== 'player' && phase !== 'dealer') return;
+    if (!dealerHand) return;
+    if (runDealerInProgressRef.current) return;
+    runDealerInProgressRef.current = true;
     setPhase('dealer');
-    setDealerHand((current) => {
-      if (!current) return current;
-      let working = { ...current };
-      while (true) {
-        const { total, soft } = handTotals(working.cards);
-        if (total > 21) {
-          break;
-        }
-        if (total > 17 || (total === 17 && !soft)) {
-          break;
-        }
-        const c = drawCard();
-        if (!c) break;
-        working = { ...working, cards: [...working.cards, c] };
-      }
-      working.isFinished = true;
-      return working;
-    });
-    resolveHands();
+    let working: Hand = { ...dealerHand, cards: [...dealerHand.cards] };
+    while (true) {
+      const { total, soft } = handTotals(working.cards);
+      if (total > 21) break;
+      if (total > 17 || (total === 17 && !soft)) break;
+      const c = drawCard();
+      if (!c) break;
+      working = { ...working, cards: [...working.cards, c] };
+    }
+    working.isFinished = true;
+    setDealerHand(working);
+    resolveHands(working);
   }
 
-  function resolveHands() {
+  function resolveHands(finalDealerHand?: Hand | null) {
     setPhase('resolution');
+    const dealerForResolution = finalDealerHand ?? dealerHand;
     setPlayerHands((hands) => {
-      if (!dealerHand) return hands;
-      const dealerTotal = handTotals(dealerHand.cards).total;
-      const dealerBJ = isBlackjack(dealerHand.cards);
+      if (!dealerForResolution) return hands;
+      const dealerTotal = handTotals(dealerForResolution.cards).total;
+      const dealerBJ = isBlackjack(dealerForResolution.cards);
       const dealerBust = dealerTotal > 21;
       let outcomeText: string[] = [];
 
@@ -431,8 +434,14 @@ export function useBlackjackGame({
   }
 
   function evaluateCountSubmission(hasInput: boolean) {
+    const effectiveRunningCount =
+      phase === 'betweenHands'
+        ? runningCount + handCountDeltaRef.current
+        : runningCount;
     const effectiveTarget =
-      countType === 'running' ? runningCount : trueCount;
+      countType === 'running'
+        ? effectiveRunningCount
+        : calcTrueCount(effectiveRunningCount, cardsRemaining);
 
     let parsed: number | null = null;
     if (hasInput && countInput.trim() !== '') {
@@ -448,11 +457,14 @@ export function useBlackjackGame({
     setCountAttempts((prev) => prev + 1);
     setHasSubmittedCount(true);
     setCountInput('');
+    if (phase === 'betweenHands') {
+      const delta = handCountDeltaRef.current;
+      setRunningCount((prev) => prev + delta);
+      handCountDeltaRef.current = 0;
+    }
   }
 
   function startNextHand() {
-    // If the user clicks Next Hand in manual pace without submitting,
-    // still evaluate the count once before moving on.
     if (phase === 'betweenHands' && !hasSubmittedCount) {
       evaluateCountSubmission(!!countInput.trim());
     }
@@ -472,6 +484,8 @@ export function useBlackjackGame({
     setActiveHandIndex(0);
     setPhase('betting');
     setRunningCount(0);
+    handCountDeltaRef.current = 0;
+    runDealerInProgressRef.current = false;
     setCountScore(0);
     setCountAttempts(0);
     setLastOutcomeText(null);

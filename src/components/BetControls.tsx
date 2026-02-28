@@ -18,8 +18,7 @@ export function BetControls({
   const isBetting = phase === 'betting';
   const isBetweenHands = phase === 'betweenHands';
   const isManualPace = pace === 'manual';
-  const dealButtonEnabled = isBetting || (isBetweenHands && isManualPace);
-  const dealButtonAction = isBetting ? onStartHand : onNextHand;
+  const nextHandEnabled = isBetweenHands && isManualPace;
 
   function adjust(delta: number) {
     const next = Math.max(1, currentBet + delta);
@@ -62,15 +61,23 @@ export function BetControls({
         <button
           type="button"
           className="btn"
-          onClick={dealButtonAction}
-          disabled={!dealButtonEnabled}
+          onClick={onStartHand}
+          disabled={!isBetting}
+        >
+          Deal Hand
+        </button>
+        <button
+          type="button"
+          className="btn secondary"
+          onClick={onNextHand}
+          disabled={!nextHandEnabled}
           title={
             isBetweenHands && !isManualPace
               ? 'Next hand starts automatically'
               : undefined
           }
         >
-          Deal Hand
+          Next Hand
         </button>
       </div>
     </div>

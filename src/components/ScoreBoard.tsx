@@ -5,8 +5,12 @@ interface ScoreBoardProps {
 }
 
 export function ScoreBoard({ score, totalAttempts, modeLabel }: ScoreBoardProps) {
+  const correctCount =
+    totalAttempts > 0
+      ? Math.max(0, Math.min(totalAttempts, Math.round((score + totalAttempts) / 2)))
+      : 0;
   const accuracy =
-    totalAttempts > 0 ? `${Math.round((score / totalAttempts) * 100)}%` : '—';
+    totalAttempts > 0 ? `${Math.round((correctCount / totalAttempts) * 100)}%` : '—';
 
   return (
     <div className="panel">
