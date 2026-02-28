@@ -3,3 +3,6 @@ dist
 .DS_Store
 *.log
 
+# Cursor rules (local only, do not push)
+.cursor
+
