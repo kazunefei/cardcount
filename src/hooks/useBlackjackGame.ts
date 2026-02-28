@@ -86,6 +86,7 @@ export function useBlackjackGame({
   const [activeHandIndex, setActiveHandIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>('betting');
   const [runningCount, setRunningCount] = useState(0);
+  const [displayRunningCount, setDisplayRunningCount] = useState(0);
   const [cardsRemaining, setCardsRemaining] = useState(0);
   const [bankroll, setBankroll] = useState(INITIAL_BANKROLL);
   const [currentBet, setCurrentBet] = useState(1);
@@ -95,35 +96,49 @@ export function useBlackjackGame({
   const [countAttempts, setCountAttempts] = useState(0);
   const [lastOutcomeText, setLastOutcomeText] = useState<string | null>(null);
   const [hasSubmittedCount, setHasSubmittedCount] = useState(false);
+  const [isShuffling, setIsShuffling] = useState(false);
 
   const shoeRef = useRef<Card[]>([]);
+  const cardsRemainingRef = useRef(0);
+  const dealerHandRef = useRef<Hand | null>(null);
   const dealerTriggeredRef = useRef(false);
   const runDealerInProgressRef = useRef(false);
-  const handCountDeltaRef = useRef(0);
+  const runningCountRef = useRef(0);
   const hasSubmittedCountRef = useRef(false);
+  const initialShoeSizeRef = useRef(0);
 
   const trueCount = useMemo(
     () => calcTrueCount(runningCount, cardsRemaining),
     [runningCount, cardsRemaining],
   );
 
+  const displayTrueCount = useMemo(
+    () => calcTrueCount(displayRunningCount, cardsRemaining),
+    [displayRunningCount, cardsRemaining],
+  );
+
   useEffect(() => {
     const newShoe = shuffle(createDeck(numDecks));
     shoeRef.current = newShoe;
+    initialShoeSizeRef.current = newShoe.length;
+    cardsRemainingRef.current = newShoe.length;
     setShoe(newShoe);
     setCardsRemaining(newShoe.length);
     setPlayerHands([]);
+    dealerHandRef.current = null;
     setDealerHand(null);
     setActiveHandIndex(0);
     setPhase('betting');
     setRunningCount(0);
-    handCountDeltaRef.current = 0;
+    runningCountRef.current = 0;
+    setDisplayRunningCount(0);
     runDealerInProgressRef.current = false;
     setCountScore(0);
     setCountAttempts(0);
     setLastOutcomeText(null);
     setHasSubmittedCount(false);
     hasSubmittedCountRef.current = false;
+    setIsShuffling(false);
     if (!practiceMode) {
       setBankroll(INITIAL_BANKROLL);
     }
@@ -148,6 +163,7 @@ export function useBlackjackGame({
     if (!shoeRef.current.length) {
       const newShoe = shuffle(createDeck(numDecks));
       shoeRef.current = newShoe;
+      cardsRemainingRef.current = newShoe.length;
       setShoe(newShoe);
       setCardsRemaining(newShoe.length);
     }
@@ -155,8 +171,13 @@ export function useBlackjackGame({
     const card = shoeRef.current.shift() ?? null;
     if (!card) return null;
 
-    setCardsRemaining(shoeRef.current.length);
-    handCountDeltaRef.current += hiLoValue(card);
+    cardsRemainingRef.current = shoeRef.current.length;
+    setCardsRemaining(cardsRemainingRef.current);
+
+    const delta = hiLoValue(card);
+    runningCountRef.current += delta;
+    setRunningCount(runningCountRef.current);
+
     setShoe([...shoeRef.current]);
 
     return card;
@@ -173,7 +194,6 @@ export function useBlackjackGame({
     if (!practiceMode && bankroll < currentBet) return;
 
     runDealerInProgressRef.current = false;
-    handCountDeltaRef.current = 0;
 
     const p1: Card[] = [];
     const d1: Card[] = [];
@@ -202,6 +222,7 @@ export function useBlackjackGame({
       result: undefined,
     };
 
+    dealerHandRef.current = dealer;
     setPlayerHands([playerHand]);
     setDealerHand(dealer);
     setActiveHandIndex(0);
@@ -333,11 +354,12 @@ export function useBlackjackGame({
 
   function runDealer() {
     if (phase !== 'player' && phase !== 'dealer') return;
-    if (!dealerHand) return;
+    const currentDealer = dealerHandRef.current;
+    if (!currentDealer || !currentDealer.cards.length) return;
     if (runDealerInProgressRef.current) return;
     runDealerInProgressRef.current = true;
     setPhase('dealer');
-    let working: Hand = { ...dealerHand, cards: [...dealerHand.cards] };
+    let working: Hand = { ...currentDealer, cards: [...currentDealer.cards] };
     while (true) {
       const { total, soft } = handTotals(working.cards);
       if (total > 21) break;
@@ -347,6 +369,7 @@ export function useBlackjackGame({
       working = { ...working, cards: [...working.cards, c] };
     }
     working.isFinished = true;
+    dealerHandRef.current = working;
     setDealerHand(working);
     resolveHands(working);
   }
@@ -408,6 +431,7 @@ export function useBlackjackGame({
       setLastOutcomeText(outcomeText.join(' • '));
       setHasSubmittedCount(false);
       hasSubmittedCountRef.current = false;
+      setRunningCount(runningCountRef.current);
       setPhase('betweenHands');
       return resolved;
     });
@@ -446,14 +470,13 @@ export function useBlackjackGame({
   }
 
   function evaluateCountSubmission(hasInput: boolean) {
-    const effectiveRunningCount =
-      phase === 'betweenHands'
-        ? runningCount + handCountDeltaRef.current
-        : runningCount;
+    // Use refs so we never score against stale state or a double-decremented cards remaining.
+    const currentRunningCount = phase === 'betweenHands' ? runningCountRef.current : runningCount;
+    const remaining = cardsRemainingRef.current;
     const effectiveTarget =
       countType === 'running'
-        ? effectiveRunningCount
-        : calcTrueCount(effectiveRunningCount, cardsRemaining);
+        ? currentRunningCount
+        : calcTrueCount(currentRunningCount, remaining);
 
     let parsed: number | null = null;
     if (hasInput && countInput.trim() !== '') {
@@ -470,10 +493,9 @@ export function useBlackjackGame({
     setHasSubmittedCount(true);
     hasSubmittedCountRef.current = true;
     setCountInput('');
+
     if (phase === 'betweenHands') {
-      const delta = handCountDeltaRef.current;
-      setRunningCount((prev) => prev + delta);
-      handCountDeltaRef.current = 0;
+      setDisplayRunningCount(runningCountRef.current);
     }
   }
 
@@ -481,7 +503,40 @@ export function useBlackjackGame({
     if (phase === 'betweenHands' && !hasSubmittedCountRef.current) {
       evaluateCountSubmission(!!countInput.trim());
     }
+
+    const totalCards = initialShoeSizeRef.current || cardsRemaining;
+    const penetrationThreshold = totalCards > 0 ? Math.floor(totalCards * 0.3) : 0;
+    const shouldReshuffle = totalCards > 0 && cardsRemaining <= penetrationThreshold;
+
+    if (shouldReshuffle) {
+      setIsShuffling(true);
+      const SHUFFLE_ANIMATION_MS = 900;
+      setTimeout(() => {
+        const newShoe = shuffle(createDeck(numDecks));
+        shoeRef.current = newShoe;
+        initialShoeSizeRef.current = newShoe.length;
+        cardsRemainingRef.current = newShoe.length;
+        setShoe(newShoe);
+        setCardsRemaining(newShoe.length);
+        setPlayerHands([]);
+        dealerHandRef.current = null;
+        setDealerHand(null);
+        setActiveHandIndex(0);
+        setPhase('betting');
+        setRunningCount(0);
+        runningCountRef.current = 0;
+        setDisplayRunningCount(0);
+        runDealerInProgressRef.current = false;
+        setHasSubmittedCount(false);
+        hasSubmittedCountRef.current = false;
+        setLastOutcomeText(null);
+        setIsShuffling(false);
+      }, SHUFFLE_ANIMATION_MS);
+      return;
+    }
+
     setPlayerHands([]);
+    dealerHandRef.current = null;
     setDealerHand(null);
     setActiveHandIndex(0);
     setPhase('betting');
@@ -490,14 +545,17 @@ export function useBlackjackGame({
   function resetShoe() {
     const newShoe = shuffle(createDeck(numDecks));
     shoeRef.current = newShoe;
+    cardsRemainingRef.current = newShoe.length;
     setShoe(newShoe);
     setCardsRemaining(newShoe.length);
     setPlayerHands([]);
+    dealerHandRef.current = null;
     setDealerHand(null);
     setActiveHandIndex(0);
     setPhase('betting');
     setRunningCount(0);
-    handCountDeltaRef.current = 0;
+    runningCountRef.current = 0;
+    setDisplayRunningCount(0);
     runDealerInProgressRef.current = false;
     setCountScore(0);
     setCountAttempts(0);
@@ -517,12 +575,15 @@ export function useBlackjackGame({
       activeHandIndex,
       runningCount,
       trueCount,
+      displayRunningCount,
+      displayTrueCount,
       bankroll,
       currentBet,
       practiceMode,
       pace,
       countScore,
       lastOutcomeText,
+      isShuffling,
     },
     actions: {
       setPace,

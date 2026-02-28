@@ -6,6 +6,7 @@ interface BlackjackTableProps {
   dealerHand: Hand | null;
   activeHandIndex: number;
   phase: string;
+  isShuffling: boolean;
   onHit(): void;
   onStand(): void;
   onDouble(): void;
@@ -19,6 +20,7 @@ export function BlackjackTable({
   dealerHand,
   activeHandIndex,
   phase,
+  isShuffling,
   onHit,
   onStand,
   onDouble,
@@ -30,6 +32,15 @@ export function BlackjackTable({
 
   return (
     <div className="card-table">
+      {isShuffling && (
+        <div className="table-banner">
+          <div className="table-banner-inner">
+            <span className="table-banner-dot">♠</span>
+            <span>Shuffling</span>
+            <span className="table-banner-dot">♣</span>
+          </div>
+        </div>
+      )}
       <div className="table-row-header">
         <h2>Blackjack Table</h2>
         <span className="muted">

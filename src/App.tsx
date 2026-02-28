@@ -334,6 +334,9 @@ function BlackjackView({ state, actions, derived, countTypeLabel, showInternalCo
     lastOutcomeText,
     runningCount,
     trueCount,
+    displayRunningCount,
+    displayTrueCount,
+    isShuffling,
   } = state;
 
   const { cardsRemaining, countInput } = derived;
@@ -347,6 +350,7 @@ function BlackjackView({ state, actions, derived, countTypeLabel, showInternalCo
         dealerHand={dealerHand}
         activeHandIndex={activeHandIndex}
         phase={phase}
+        isShuffling={isShuffling}
         onHit={actions.hit}
         onStand={actions.stand}
         onDouble={actions.doubleDown}
@@ -385,11 +389,11 @@ function BlackjackView({ state, actions, derived, countTypeLabel, showInternalCo
                 </div>
                 <div className="stat-row">
                   <span className="stat-label">Internal running count</span>
-                  <span className="stat-value">{runningCount}</span>
+                  <span className="stat-value">{displayRunningCount}</span>
                 </div>
                 <div className="stat-row">
                   <span className="stat-label">Internal true count</span>
-                  <span className="stat-value">{trueCount}</span>
+                  <span className="stat-value">{displayTrueCount}</span>
                 </div>
               </>
             )}
