@@ -1,4 +1,5 @@
-# Build and deploy the Vite app to GitHub Pages (https://<user>.github.io/cardcount/)
+# Build and deploy the Vite app to GitHub Pages
+# https://<user>.github.io/cardcount/
 name: Deploy to GitHub Pages
 
 on:

@@ -13,7 +13,7 @@ export interface SettingsState {
 }
 
 export function useGameMode() {
-  const [mode, setMode] = useState<GameMode>('counting');
+  const [mode, setMode] = useState<GameMode>('blackjack');
   const [settings, setSettings] = useState<SettingsState>({
     numDecks: 6,
     countType: 'running',
