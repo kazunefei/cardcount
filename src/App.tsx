@@ -24,6 +24,7 @@ function App() {
     numDecks: settings.numDecks,
     countType: settings.countType,
     practiceMode: settings.practiceBankroll,
+    dealerSoft17Rule: settings.dealerSoft17Rule,
   });
 
   const countingAttempts = counting.attempts;
@@ -51,7 +52,7 @@ function App() {
           <div className="panel-header">
             <h2>Settings</h2>
           </div>
-          <div className="compact-row">
+          <div className="compact-row settings-grid">
             <div>
               <div className="field-label">Decks in shoe</div>
               <div className="compact-row decks-control">
@@ -153,28 +154,32 @@ function App() {
                 </button>
               </div>
             </div>
+            <div>
+              <div className="field-label">Dealer soft 17</div>
+              <div className="segmented-control">
+                <button
+                  type="button"
+                  className={`segmented-option ${
+                    settings.dealerSoft17Rule === 'hit' ? 'active' : ''
+                  }`}
+                  onClick={() => updateSettings({ dealerSoft17Rule: 'hit' })}
+                >
+                  Hit
+                </button>
+                <button
+                  type="button"
+                  className={`segmented-option ${
+                    settings.dealerSoft17Rule === 'stand' ? 'active' : ''
+                  }`}
+                  onClick={() => updateSettings({ dealerSoft17Rule: 'stand' })}
+                >
+                  Stand
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="panel">
-          <div className="panel-header">
-            <h2>Count Info</h2>
-          </div>
-          <div className="compact-row">
-            <div className="pill">
-              <span className="pill-label">Mode</span>
-              <span className="pill-value">{mode === 'counting' ? 'Counting' : 'Blackjack'}</span>
-            </div>
-            <div className="pill">
-              <span className="pill-label">Count</span>
-              <span className="pill-value">{countTypeLabel}</span>
-            </div>
-            <div className="pill">
-              <span className="pill-label">Decks</span>
-              <span className="pill-value">{settings.numDecks}</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       <main className="app-main">

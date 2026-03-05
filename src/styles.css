@@ -62,6 +62,20 @@ body {
   margin-bottom: 16px;
 }
 
+.app-controls-row .panel {
+  width: 100%;
+  padding: 14px 18px;
+}
+
+.settings-grid {
+  gap: 16px 22px;
+  align-items: flex-start;
+}
+
+.settings-grid > div {
+  min-width: 180px;
+}
+
 .app-main {
   flex: 1;
   display: grid;

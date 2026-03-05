@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, createDeck, shuffle } from '../lib/deck';
 import { calcTrueCount, hiLoValue } from '../lib/counting';
-import type { CountType, PaceMode } from './useGameMode';
+import type { CountType, DealerSoft17Rule, PaceMode } from './useGameMode';
 
 type Phase = 'betting' | 'dealing' | 'player' | 'dealer' | 'resolution' | 'betweenHands';
 
@@ -33,6 +33,7 @@ interface UseBlackjackOptions {
   numDecks: number;
   countType: CountType;
   practiceMode: boolean;
+  dealerSoft17Rule: DealerSoft17Rule;
 }
 
 const INITIAL_BANKROLL = 100;
@@ -79,6 +80,7 @@ export function useBlackjackGame({
   numDecks,
   countType,
   practiceMode,
+  dealerSoft17Rule,
 }: UseBlackjackOptions) {
   const [shoe, setShoe] = useState<Card[]>([]);
   const [playerHands, setPlayerHands] = useState<Hand[]>([]);
@@ -363,7 +365,11 @@ export function useBlackjackGame({
     while (true) {
       const { total, soft } = handTotals(working.cards);
       if (total > 21) break;
-      if (total > 17 || (total === 17 && !soft)) break;
+      if (total > 17) break;
+      if (total === 17) {
+        const shouldStandOn17 = !soft || dealerSoft17Rule === 'stand';
+        if (shouldStandOn17) break;
+      }
       const c = drawCard();
       if (!c) break;
       working = { ...working, cards: [...working.cards, c] };
