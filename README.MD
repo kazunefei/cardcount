@@ -1,5 +1,5 @@
 # Card counting
 
-Short drill for practicing card counting (e.g. Hi-Lo). No fluff.
+Short drill for practicing Hi-Lo card counting, with realistic blackjack mode to improve simulation + training quality
 
 **[Try it →](https://kazunefei.github.io/cardcount/)**
