@@ -316,6 +316,23 @@ select {
   flex-wrap: wrap;
 }
 
+.deal-card {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
+  animation: deal-in 420ms ease-out forwards;
+}
+
+@keyframes deal-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .playing-card {
   width: 90px;
   height: 130px;

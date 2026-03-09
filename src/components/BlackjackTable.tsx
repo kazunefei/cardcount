@@ -29,6 +29,13 @@ export function BlackjackTable({
   lastOutcomeText,
 }: BlackjackTableProps) {
   const isBetweenHands = phase === 'betweenHands';
+  const DEAL_STAGGER_MS = 1000;
+
+  function dealStyle(index: number, offset = 0) {
+    return {
+      animationDelay: `${(index + offset) * DEAL_STAGGER_MS}ms`,
+    };
+  }
 
   return (
     <div className="card-table">
@@ -62,13 +69,19 @@ export function BlackjackTable({
           {!dealerHand && <div className="card-slot">Waiting for deal</div>}
           {dealerHand && phase === 'player' && (
             <>
-              <PlayingCard card={dealerHand.cards[0]} />
-              <div className="card-back" aria-hidden="true" />
+              <div className="deal-card" style={dealStyle(0)}>
+                <PlayingCard card={dealerHand.cards[0]} />
+              </div>
+              <div className="deal-card" style={dealStyle(1)}>
+                <div className="card-back" aria-hidden="true" />
+              </div>
             </>
           )}
           {dealerHand && phase !== 'player' &&
-            dealerHand.cards.map((c) => (
-              <PlayingCard key={c.id} card={c} />
+            dealerHand.cards.map((c, index) => (
+              <div key={c.id} className="deal-card" style={dealStyle(index)}>
+                <PlayingCard card={c} />
+              </div>
             ))}
         </div>
       </div>
@@ -83,8 +96,14 @@ export function BlackjackTable({
                 Hand {index + 1} {index === activeHandIndex ? '(active)' : ''}
               </div>
               <div className="card-row">
-                {hand.cards.map((c) => (
-                  <PlayingCard key={c.id} card={c} />
+                {hand.cards.map((c, cardIndex) => (
+                  <div
+                    key={c.id}
+                    className="deal-card"
+                    style={dealStyle(cardIndex, dealerHand?.cards.length ?? 0)}
+                  >
+                    <PlayingCard card={c} />
+                  </div>
                 ))}
               </div>
               <div className="muted">Bet: {hand.bet}</div>
