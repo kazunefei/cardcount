@@ -322,6 +322,12 @@ select {
   animation: deal-in 420ms ease-out forwards;
 }
 
+.deal-card.no-anim {
+  opacity: 1;
+  transform: none;
+  animation: none;
+}
+
 @keyframes deal-in {
   from {
     opacity: 0;

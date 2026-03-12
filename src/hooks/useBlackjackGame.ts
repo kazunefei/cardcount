@@ -299,7 +299,11 @@ export function useBlackjackGame({
       const idx = activeHandIndex;
       const hand = hands[idx];
       if (!hand || hand.cards.length !== 2) return hands;
-      if (hand.cards[0].rank !== hand.cards[1].rank) return hands;
+      const r1 = hand.cards[0].rank;
+      const r2 = hand.cards[1].rank;
+      const isTenValue = (r: string) => r === '10' || r === 'J' || r === 'Q' || r === 'K';
+      const canSplit = r1 === r2 || (isTenValue(r1) && isTenValue(r2));
+      if (!canSplit) return hands;
       if (!practiceMode && bankroll < hand.bet) return hands;
 
       const firstCard = hand.cards[0];
